@@ -1,6 +1,6 @@
 ---
 title: "Climate Change Module"
-author: 'Add name'
+author: "Anh Bui"
 format:
   html:
     embed-resources: true
@@ -43,13 +43,22 @@ ggplot(co2, aes(x = decimal_date, y = monthly_average)) +
 
 Describe the overall trend in the CO2 data.
 
-**Answer 1:**
+**Answer 1:** There is an overall positive linear trend in the CO2 data.
 
-**Question 2:**
+**Question 2:** 
 
 How does CO2 vary within a year?  What month is it at max?  Min?  What might explain this sub-annual pattern? (you will need to write code and make a plot to answer this question)
 
-**Answer 2:**
+```{r}
+
+co2 |> 
+  ggplot(aes(x = month, y = monthly_average, color = year, group = year)) +
+  geom_line() + geom_point()
+
+
+```
+
+**Answer 2:** The CO2 pattern in most years is that there is a slight spike around the end of May or beginning of June, with a dip around September before returning back to the level at the start.
 
 
 
@@ -61,7 +70,7 @@ Each of the most recent years has been the warmest on record. In this section, w
 
 Data from: <https://climate.nasa.gov/vital-signs/global-temperature/>
 
-**Question 3:**
+**Question 3:** 
 
 Describe the data set to the best of your ability, given the documentation provided. 
 
