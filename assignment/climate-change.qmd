@@ -257,6 +257,8 @@ Your answer to Question 10 is going to be a mix of code chunks and text that you
 
 q10data <- "https://data.ess-dive.lbl.gov/catalog/d1/mn/v2/object/ess-dive-457358fdc81d3a5-20180726T203952542"
 
+df2 <- read_table(q10data, skip = 20, col_names = c("Depth (m)", "Age of the ice (yr BP)", "Mean age of the air (yr BP)", "CO2 concentration (ppmv)"))
+
 df2 <- df2 |> 
   mutate(
     `Age of the ice (yr BP)` = as.numeric(`Age of the ice (yr BP)`),
