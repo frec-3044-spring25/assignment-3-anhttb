@@ -8,6 +8,7 @@ format:
 
 ```{r message=FALSE}
 library(tidyverse)
+library(zoo)
 ```
 
 ## Warm-up: Examining CO2 trends in R
@@ -58,7 +59,7 @@ co2 |>
 
 ```
 
-**Answer 2:** The CO2 pattern in most years is that there is a slight spike around the end of May or beginning of June, with a dip around September before returning back to the level at the start.
+**Answer 2:** The CO2 pattern in most years is that there is a slight spike around the end of May or beginning of June, with a dip around September before returning back to the level at the start. These levels can be explained through plant growth and respiratory patterns, as they largely impact CO2 levels.
 
 
 
@@ -78,7 +79,17 @@ Describe the data set to the best of your ability, given the documentation provi
 - Describe the class of each column and what units it is measured in. 
 - What is the difference between "global temperature" and "global temperature anomaly"? 
 
+```{r}
+
+str(df)
+
+```
+
+
 **Answer 3:**
+- This data was analyzed by NASA using independent analyses from the National Oceanic and Atmospheric Administration (NOAA) and other research groups
+- The column year falls into the integer classification while no_smoothing and lowess_5yr_smoothing are numeric. Year represents the calendar year while no_smoothing and lowess_5yr_smoothing are also measured by degrees Celsius
+- Global temperature refers to the actual temperature of Earth at a certain time while global temperature anomaly refers to the temperature deviating from the baseline temperature.
 
 
 **Question 4:**
@@ -89,11 +100,35 @@ You'll need to determine the file's delimiter and any comments or skips. You wil
 
 **Answer 4:**
 
+```{r}
+
+q4data <- "https://data.giss.nasa.gov/gistemp/graphs/graph_data/Global_Mean_Estimates_based_on_Land_and_Ocean_Data/graph.txt"
+
+df <- read_table(q4data, skip = 5, col_names = c("Year", "No_Smoothing", "Lowess_5yr_Smoothing"))
+
+```
+
 **Question 5:**
 
 Plot the trend in global mean temperatures over time.  Describe what you see in the plot and how you interpret the patterns you observe.
 
+```{r}
+
+df |> 
+  ggplot(aes(x = Year, y = No_Smoothing)) +
+  geom_line() +  
+  #geom_line(aes(y = Lowess_5yr_Smoothing), color = "red") +
+  labs(title = "Global Mean Temperatures Over Time", y = "Deviation from Global Temperature (C)")
+       
+
+
+
+
+```
+
 **Answer 5:**
+
+Overall, the deviation from the baseline global temp has steadily been rising. It used to be around or even below the baseline temperature but around the 1930s there was a spike and from then on, it has been rising and even picking up exponentially after the 1970s.
 
 ## Evaluating the evidence for a "Pause" in warming?
 
@@ -101,11 +136,11 @@ The [2013 IPCC Report](https://www.ipcc.ch/pdf/assessment-report/ar5/wg1/WG1AR5_
 
 You will use rolling averages to help you explore the evidence for a pause. Since you have not been provided instructions for calculating rolling means, the learning objective of this question is to practice finding the solution.
 
-**Question 6:**
+**Question 6:** 
 
 Use a search engine (e.g., Google) or a chat LLM to find out how to calculate a rolling average in R. What search term or chat LLM prompt did you use?  What website or answer from the chat LLM did you end up using?  How much did you need to modify the code from the website or chat LLM to answer the question successfully?
 
-**Answer 6:**
+**Answer 6:** I used the prompt "can you give me code in r that calculates a rolling average for my data above and generates 5-year running averages, 10-year running averages, and 20-year running averages" which actually gave me the code for the graph that had all of the averages on the same plot. Since it did not know that I used pipes, I had to delete the data before the aes() function in ggplot. Then, I used facet wrap to make the graphs separate from each other. Overall, I did not need to modify much of the code that the chat LLM gave me.
 
 **Question 7:**
 
@@ -114,15 +149,63 @@ Use a search engine (e.g., Google) or a chat LLM to find out how to calculate a 
 
 **Answer 7:**
 
+```{r}
+
+df <- df |> 
+  mutate(
+    Rolling_5yr = rollmean(No_Smoothing, k = 5, fill = NA, align = "center"),
+    Rolling_10yr = rollmean(No_Smoothing, k = 10, fill = NA, align = "center"),
+    Rolling_20yr = rollmean(No_Smoothing, k = 20, fill = NA, align = "center"))
+
+df_long <- df |> 
+  select(Year, Rolling_5yr, Rolling_10yr, Rolling_20yr) %>%
+  pivot_longer(cols = c(Rolling_5yr, Rolling_10yr, Rolling_20yr), 
+               names_to = "Rolling_Avg", values_to = "Value")
+
+df_long |> 
+  ggplot(aes(x = Year, y = Value, color = Rolling_Avg)) +
+    geom_line(size = 1) +
+    facet_wrap(~Rolling_Avg, scales = "free_y") + 
+    labs(
+      title = "Global Temperature Anomaly with Rolling Averages",
+      x = "Year",
+      y = "Temperature Anomaly (°C)",
+      caption = "Data Source: NASA GISTEMP"
+    ) +
+    scale_color_manual(values = c("blue", "green", "red")) +
+    theme_minimal() +
+    theme(legend.position = "none")
+
+
+```
+
 **Question 8:**
 
 Plot the different averages on the *same plot* and describe what differences you see and why.  
 
 **Answer 8:**
 
+```{r}
+
+df |> 
+  ggplot(aes(x = Year)) +
+    geom_line(aes(y = No_Smoothing), color = "gray", alpha = 0.5, linetype = "dotted") + 
+    geom_line(aes(y = Rolling_5yr), color = "blue", size = 1, alpha = 0.8) +  
+    geom_line(aes(y = Rolling_10yr), color = "green", size = 1.2, alpha = 0.8) +  
+    geom_line(aes(y = Rolling_20yr), color = "red", size = 1.5, alpha = 0.8) +  
+    labs(title = "Global Temperature Anomaly with Running Averages",
+         subtitle = "5-year (blue), 10-year (green), 20-year (red) rolling averages",
+         x = "Year",
+         y = "Temperature Anomaly (°C)",
+         caption = "Data Source: NASA GISTEMP") +
+    theme_minimal()
+
+
+```
+
 **Question 9:**
 
-By examining the data here, what evidence do you find or not find for such a pause? 
+I think that a pause did not happen and instead of a "much smaller increasing trend in global mean temperatures since 1998 than was observed previously", the opposite is displayed as around 1998, the increase in global temperatures became much steeper than before.
 
 **Answer 9:**
 
