@@ -249,8 +249,41 @@ Your answer to Question 10 is going to be a mix of code chunks and text that you
 
 **Answer 10:**
 
+- The columns and units are Depth (m), Age of the ice (yr BP), Mean age of the air (yr BP), and CO2 concentration (ppmv) and the numbers came from research done by ESS-DIVE
+- The data is collected by the year or age of the ice 
+- Throughout history, while atmospheric CO2 levels have been fluctuating, it is no where near how atmospheric CO2 levels have reached recently. It would never go above 300 ppmv but in recent years, it has exponentially increased up to over 400 ppmv.
+
 ```{r}
 
+q10data <- "https://data.ess-dive.lbl.gov/catalog/d1/mn/v2/object/ess-dive-457358fdc81d3a5-20180726T203952542"
+
+df2 <- df2 |> 
+  mutate(
+    `Age of the ice (yr BP)` = as.numeric(`Age of the ice (yr BP)`),
+    Calendar_Year = 1950 - `Age of the ice (yr BP)`) |> 
+  arrange(Calendar_Year)
+
+df2 |> 
+  ggplot(aes(x = Calendar_Year, y = `CO2 concentration (ppmv)`)) +
+    geom_line(color = "blue") +
+    geom_point(color = "red", size = 1) +
+    labs(
+      title = "CO₂ Concentration Over Time",
+      x = "Calendar Year",
+      y = "CO2 Concentration (ppmv)"
+    ) +
+    theme_minimal()
+
+newco2 <- co2 |> 
+  select(year, monthly_average) |> 
+  rename(Calendar_Year = year, `CO2 concentration (ppmv)` = monthly_average)
+
+combined_df <- bind_rows(df2, newco2) %>%
+  arrange(Calendar_Year)
+
+combined_df |> 
+  ggplot(aes(x = Calendar_Year, y = `CO2 concentration (ppmv)`)) +
+  geom_line()
 
 ```
 
@@ -261,6 +294,8 @@ Remember to Render your document as HTML and comment+push to GitHub your code an
 # Attribution
 
 Include citation of any AI-generated assistance or discussion with classmates (per policy in syllabus). Proper documentation of AI-generated assistance includes the prompt, the source (e.g., ChatGPT), and the significant parts of the response.  Proper documentation of discussion with classmates include listing their names and the components discussed.  
+
+I used ChatGPT for the question that required us to use a chat LLM for rolling averages. I also reached out to Quin Campbell to double check my graphs for the last question since I wasn't sure of the negative numbers were right.
 
 
 
